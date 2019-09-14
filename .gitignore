@@ -9,6 +9,9 @@ __pycache__/
 # PyCharm
 .idea
 
+# 设置push时不带上本地的log日志文件，但因空文件夹push时会被git自动忽略，故需在文件夹里创建.gitkeep文件，提醒git把空文件夹也push上去！
+logs/log*
+
 # Distribution / packaging
 .Python
 build/

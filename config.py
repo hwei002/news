@@ -1,8 +1,13 @@
+import logging
 from redis import StrictRedis
 
 
 class Config(object):
     """项目基本配置，用来被后续不同模式继承"""
+    DEBUG = True
+    TESTING = False
+    LOG_LEVEL = logging.DEBUG  # 日志默认DEBUG等级（DEBUG及以上等级的信息才会被记录）
+
     # 为 SQL 数据库添加配置
     SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/news"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -22,17 +27,18 @@ class Config(object):
 
 class DevelopmentConfig(Config):
     """开发环境下的配置"""
-    DEBUG = True
+    pass
 
 
 class ProductionConfig(Config):
     """生产环境下的配置"""
     DEBUG = False  # 除debug而外，生产环境下的redis_host也不应该是127.0.0.1 --- 后续再改
+    LOG_LEVEL = logging.WARNING  # 生产环境下，日志用WARNING等级（WARNING及以上等级的信息才会记录）
 
 
 class TestingConfig(Config):
     """单元测试环境下的配置"""
-    DEBUG = True
+    TESTING = True  # 单元测试时，报错信息自动定位到原始文件的出错行，而不是单元测试代码中的调用行
 
 
 config = {
@@ -40,3 +46,4 @@ config = {
     "production": ProductionConfig,
     "testing": TestingConfig,
 }
+

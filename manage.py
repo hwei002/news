@@ -1,4 +1,5 @@
-from flask import session
+import logging
+from flask import session, current_app
 from flask.ext.script import Manager
 from flask.ext.migrate import Migrate, MigrateCommand
 # app/sql/redis/csrf/session属业务逻辑，放info包。
@@ -17,6 +18,18 @@ manager.add_command('db', MigrateCommand)
 @app.route('/')
 def index():
     session["name"] = "laowang"
+    # 测试打印日志
+    logging.debug('测试debug')
+    logging.info('测试info')
+    logging.warning('测试warning')
+    logging.error('测试error')
+    logging.fatal('测试fatal')
+    # Flask框架封装logging --> 美化输出 & logger能根据app是否debug自动调整日志等级
+    current_app.logger.debug('测试debug')
+    current_app.logger.info('测试info')
+    current_app.logger.warning('测试warning')
+    current_app.logger.error('测试error')
+    current_app.logger.fatal('测试fatal')
     return 'index'
 
 
