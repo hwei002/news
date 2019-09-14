@@ -8,6 +8,7 @@ from flask_session import Session
 # flask中session --- 用于在视图函数中作为键值对的字典名，如session["name"] = "laowang"
 # flask_session中Session --- 可以指定数据保存位置，如redis/sqlalchemy/mongodb/memcached等
 from flask.ext.script import Manager
+from flask.ext.migrate import Migrate, MigrateCommand
 
 
 class Config(object):
@@ -44,6 +45,9 @@ CSRFProtect(app)
 Session(app)
 # 设置Flask-Script，用命令行运行【python manage.py runserver】
 manager = Manager(app)
+# 设置Migrate数据库迁移功能：关联 app 与 db，并把迁移命令添加到Script
+Migrate(app, db)
+manager.add_command('db', MigrateCommand)
 
 
 @app.route('/')
