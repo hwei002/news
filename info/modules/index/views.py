@@ -1,11 +1,11 @@
 # 3.导入蓝图对象，并用它注册路由，装饰视图函数
 from . import index_blu
-from info import redis_store
+from flask import render_template
 
 
 @index_blu.route('/')
 def index():
-    redis_store.set("name", "laowang")  # 直接set，保存到redis中的数据是明文
+    # redis_store.set("name", "laowang")  # 直接set，保存到redis中的数据是明文
     # session["name"] = "laowang"  # 用session，保存到redis中的数据会自动加密
 
     # 测试打印日志
@@ -22,6 +22,4 @@ def index():
     # current_app.logger.error('测试error')
     # current_app.logger.fatal('测试fatal')
 
-    return 'index'
-
-
+    return render_template('news/index.html')
