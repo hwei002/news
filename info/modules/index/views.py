@@ -1,6 +1,6 @@
 # 3.导入蓝图对象，并用它注册路由，装饰视图函数
 from . import index_blu
-from flask import render_template
+from flask import render_template, current_app
 
 
 @index_blu.route('/')
@@ -23,3 +23,10 @@ def index():
     # current_app.logger.fatal('测试fatal')
 
     return render_template('news/index.html')
+
+
+# 在打开网页时，浏览器会默认去请求【根路径+favicon.ico】作为网站标签的小图标
+# send_static_file是flask提供的查找指定静态文件的方法
+@index_blu.route('/favicon.ico')
+def favicon():
+    return current_app.send_static_file('news/favicon.ico')
