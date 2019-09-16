@@ -8,3 +8,4 @@ index_blu = Blueprint("index", __name__)
 from . import views
 
 # 5.将蓝图注册添加到create_app函数中
+

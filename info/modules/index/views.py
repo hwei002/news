@@ -5,7 +5,6 @@ from info import redis_store
 
 @index_blu.route('/')
 def index():
-
     redis_store.set("name", "laowang")  # 直接set，保存到redis中的数据是明文
     # session["name"] = "laowang"  # 用session，保存到redis中的数据会自动加密
 
