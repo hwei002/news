@@ -179,7 +179,38 @@ function sendSMSCode() {
         return;
     }
 
-    // TODO 发送短信验证码
+    // 以上验证均通过后，即可开始真正的【发送短信验证码】部分代码
+    var params = {
+        "mobile": mobile,
+        "image_code": imageCode,
+        "image_code_id": imageCodeId
+    };
+
+    // 发起注册请求，用ajax监控注册表单，并实现必要时的局部刷新（入验证码输入错误时，弹出红色报错，而不刷新全局页面）
+    $.ajax({
+        url: "/passport/sms_code",  // 请求地址
+        method: "POST",  // 请求方式，等价于【type: "post"】
+        data: JSON.stringify(params),  // 请求参数
+        contentType: "application/json",  // 请求参数的数据类型
+        success: function(response){  // 倒计时
+            if (response.errno == "0"){  // 代表发射成功
+                var num = 60;  // 倒计时60秒
+                var t = setInterval(function(){
+                    if (num == 1) {  // 代表倒计时结束
+                        clearInterval(t);  // 清除倒计时
+                        $(".get_code").html("点击获取验证码");  // 设置显示内容
+                        $(".get_code").attr("onclick", "sendSMSCode();");  // 添加点击事件
+                    }else {
+                        num -= 1;
+                        $(".get_code").html(num + "秒");  // 设置 a 标签显示的内容
+                    }
+                }, 1000);  // 每间隔1000毫秒，执行一遍这个function
+            }else {
+                alert(response.errmsg);  // 代表发送失败
+                $(".get_code").attr("onclick", "sendSMSCode();");
+            }
+        }
+    })
 }
 
 // 调用该函数模拟点击左侧按钮

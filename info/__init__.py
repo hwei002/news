@@ -45,7 +45,8 @@ def create_app(environment):
     # 为redis对象指定地址和端口，完成redis对象初始化
     global redis_store
     redis_store = StrictRedis(host=config[environment].REDIS_HOST,
-                              port=config[environment].REDIS_PORT)
+                              port=config[environment].REDIS_PORT,
+                              decode_responses=True)  # redis中取出的value默认binary格式，设置解码将其转换回string。
     # 开启当前项目 CSRF 保护（只做验证，cookie中csrf_token和表单中csrf_token需要手动实现）
     CSRFProtect(app)
     # 设置用Session将 app 中数据保存到指定位置
