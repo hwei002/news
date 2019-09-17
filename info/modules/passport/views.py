@@ -1,6 +1,4 @@
-from flask import abort, current_app, request
-from flask import make_response
-
+from flask import abort, current_app, request, make_response
 from info import constants, redis_store
 from info.utils.captcha.captcha import captcha
 from . import passport_blu
@@ -30,3 +28,4 @@ def get_image_code():
     response = make_response(image)
     response.headers["Content-Type"] = "image/jpg"
     return response
+
