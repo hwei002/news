@@ -33,9 +33,19 @@ $(function(){
 
 
 	// 点击输入框，提示文字上移
-	$('.form_group').on('click focusin',function(){
-		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').siblings('input').focus().parent().addClass('hotline');
-	})
+	// $('.form_group').on('click focusin',function(){
+	// 	$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').siblings('input').focus().parent().addClass('hotline');
+	// })
+
+    $('.form_group').on('click',function(){
+        $(this).children('input').focus()
+    })
+
+    $('.form_group input').on('focusin',function(){
+        $(this).siblings('.input_tip').animate({'top':-5,'font-size':12},'fast')
+        $(this).parent().addClass('hotline');
+    })  // 解决js报错bug————用上述两段，替换到注释掉的那一段
+
 
 	// 输入框失去焦点，如果输入框为空，则提示文字下移
 	$('.form_group input').on('blur focusout',function(){
@@ -113,15 +123,15 @@ $(function(){
     })
 
 
-    // TODO 注册按钮点击
+    // 注册按钮点击
     $(".register_form_con").submit(function (e) {
-        // 阻止默认提交操作
-        e.preventDefault()
+        // 阻止默认提交操作————表单提交默认自动刷新全局页面，若验证码/密码有误，则无法显示报错，故需ajax监控页面做局部刷新。
+        e.preventDefault();
 
 		// 取到用户输入的内容
-        var mobile = $("#register_mobile").val()
-        var smscode = $("#smscode").val()
-        var password = $("#register_password").val()
+        var mobile = $("#register_mobile").val();
+        var smscode = $("#smscode").val();
+        var password = $("#register_password").val();
 
 		if (!mobile) {
             $("#register-mobile-err").show();
@@ -143,19 +153,41 @@ $(function(){
             return;
         }
 
-        // 发起注册请求
+        // 上述验证均通过后，即可正式发起注册请求
+        var params = {
+            "mobile": mobile,
+            "smscode": smscode,
+            "password": password
+        };
+
+        $.ajax({
+            url: "/passport/register",
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(params),
+            success: function(resp){
+                if (resp.errno == "0"){
+                    // 代表注册成功
+                }else {
+                    //代表注册失败
+                    alert(resp.errmsg);
+                    $("#register-password-err").html(resp.errmsg);
+                    $("#register-password-err").show();
+                }
+            }
+        })
 
     })
-})
+});
 
-var imageCodeId = ""
+var imageCodeId = "";
 
 // 生成一个图片验证码的编号，并设置页面中图片验证码img标签的src属性
 function generateImageCode() {
     // 浏览器要发起图片验证码请求/image_code?imageCodeId=xxxxx
-    imageCodeId = generateUUID()
+    imageCodeId = generateUUID();
     // 生成url
-    var url = "/passport/image_code?imageCodeId=" + imageCodeId
+    var url = "/passport/image_code?imageCodeId=" + imageCodeId;
     // 给指定img标签设置src，设置地之后，img标签就会去向这个地址发起图片请求
     $(".get_pic_code").attr("src", url)
 }
