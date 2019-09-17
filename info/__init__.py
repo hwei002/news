@@ -48,7 +48,7 @@ def create_app(environment):
                               port=config[environment].REDIS_PORT,
                               decode_responses=True)  # redis中取出的value默认binary格式，设置解码将其转换回string。
     # 开启当前项目 CSRF 保护（只做验证，cookie中csrf_token和表单中csrf_token需要手动实现）
-    CSRFProtect(app)
+    # CSRFProtect(app)
     # 设置用Session将 app 中数据保存到指定位置
     Session(app)
     # 注册网站首页蓝图。hint：蓝图在注册前的导入命令切勿置顶！否则会陷入import死循环！最好紧挨着注册行导入！

@@ -167,7 +167,8 @@ $(function(){
             data: JSON.stringify(params),
             success: function(resp){
                 if (resp.errno == "0"){
-                    // 代表注册成功
+                    // 代表注册成功，
+                    location.reload()  // 成功后刷新整个页面（后续将实现：此时状态 “已登录” ）
                 }else {
                     //代表注册失败
                     alert(resp.errmsg);

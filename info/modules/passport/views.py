@@ -89,6 +89,9 @@ def send_sms_code():
 
     # 5. 生成短信验证码内容，随机6位数字符串
     sms_code_str = "%06d" % random.randint(0, 999999)
+    # print(sms_code_str)  # 确保容联云代码无误后，开发时用这三行，可跳过容联云仅能给指定手机发短信的限制，测试注册成功后自动跳转
+    # redis_store.set('SMS_' + mobile, sms_code_str, constants.SMS_CODE_REDIS_EXPIRES)
+    # return jsonify(errno=RET.OK, errmsg="发送成功")
 
     # 6. 发送短信验证码
     result = CCP().send_template_sms(mobile, [sms_code_str, constants.SMS_CODE_REDIS_EXPIRES//60], 1)
