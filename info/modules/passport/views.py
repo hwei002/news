@@ -38,7 +38,8 @@ def register():
     user.mobile = mobile
     user.nick_name = mobile  # 暂时没有昵称，用手机号代替
     user.last_login = datetime.now()  # 用时间戳记录用户最近一次登陆时间
-    # TODO 对密码进行加密处理（不能存储明文密码）
+    # 对密码进行加密处理，用property装饰器，把password方法伪装成password属性。
+    user.password = password  # 在password.setter中将加密后的密码赋值给user.password_hash。
 
     # 6. 添加到数据库
     try:

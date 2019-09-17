@@ -58,16 +58,16 @@ class User(BaseModel, db.Model):
     # 当前用户所发布的新闻
     news_list = db.relationship('News', backref='user', lazy='dynamic')
 
-    # @property
-    # def password(self):
-    #     raise AttributeError("当前属性不可读")
-    #
-    # @password.setter
-    # def password(self, value):
-    #     self.password_hash = generate_password_hash(value)
-    #
-    # def check_passowrd(self, password):
-    #     return check_password_hash(self.password_hash, password)
+    @property
+    def password(self):
+        raise AttributeError("当前属性不可读")  # 用户的注册密码，不允许直接读取
+
+    @password.setter
+    def password(self, value):
+        self.password_hash = generate_password_hash(value)  # 用werkzeug中security安全模块，自动为明文密码加密。
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)  # 验证时无需解密，直接调用安全模块check方法验证。
 
     def to_dict(self):
         resp_dict = {
