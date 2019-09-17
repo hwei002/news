@@ -1,10 +1,61 @@
 import random, re
-from flask import abort, current_app, request, make_response, jsonify
-from info import constants, redis_store
+from datetime import datetime
+from flask import abort, current_app, request, make_response, jsonify, session
+from info import constants, redis_store, db
 from info.libs.yuntongxun.sms import CCP
+from info.models import User
 from info.utils.captcha.captcha import captcha
 from info.utils.response_code import RET
 from . import passport_blu
+
+
+@passport_blu.route('/register', methods=['POST'])
+def register():
+
+    # 1. 获取参数（用户手机号、短信验证码、用户所输密码）
+    params_dict = request.json
+    mobile, smscode, password = params_dict["mobile"], params_dict["smscode"], params_dict["password"]
+
+    # 2. 校验参数是否为空（手机号格式之前已校验过，此处可略）
+    if not all([mobile, smscode, password]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    # 3. 读取redis中真实的短信验证码内容
+    try:
+        real_smscode = redis_store.get("SMS_"+mobile)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据查询失败")
+    if not real_smscode:
+        return jsonify(errno=RET.NODATA, errmsg="验证码已过期")
+
+    # 4. 校验用户输入验证码是否正确
+    if real_smscode != smscode:
+        return jsonify(errno=RET.DATAERR, errmsg="验证码输入错误")
+
+    # 5. 如果正确，初始化User模型，并且赋值属性
+    user = User()
+    user.mobile = mobile
+    user.nick_name = mobile  # 暂时没有昵称，用手机号代替
+    user.last_login = datetime.now()  # 用时间戳记录用户最近一次登陆时间
+    # TODO 对密码进行加密处理（不能存储明文密码）
+
+    # 6. 添加到数据库
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="数据保存失败")
+
+    # 7. 往session中保存数据表示当前已经登录
+    session["user_id"] = user.id
+    session["mobile"] = user.mobile
+    session["nick_name"] = user.nick_name
+
+    # 8. 返回响应
+    return jsonify(errno=RET.OK, errmsg="注册成功")
 
 
 @passport_blu.route('/sms_code', methods=['POST'])
