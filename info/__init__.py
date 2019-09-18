@@ -49,6 +49,10 @@ def create_app(environment):
                               port=config[environment].REDIS_PORT,
                               decode_responses=True)  # redis中取出的value默认binary格式，设置解码将其转换回string。
 
+    # 添加自定义过滤器
+    from info.utils.common import do_index_class
+    app.add_template_filter(do_index_class, "index_class")
+
     # 开启当前项目 CSRF 保护（只做验证，cookie中csrf_token和表单中csrf_token需要手动实现）
     CSRFProtect(app)
     # 上一行帮我们做了：从cookie中取出随机值，从表单中取出随机值，然后校验，并响应校验结果
