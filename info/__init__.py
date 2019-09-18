@@ -4,6 +4,7 @@ from redis import StrictRedis
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.wtf import CSRFProtect
+from flask.ext.wtf.csrf import generate_csrf
 from flask_session import Session
 # flask中有一个大写Session，还有一个小写session，这三个各不相同
 # flask中Session --- 将浏览器来的数据加密存cookie返回浏览器，浏览器下次带cookie来再解密
@@ -47,8 +48,20 @@ def create_app(environment):
     redis_store = StrictRedis(host=config[environment].REDIS_HOST,
                               port=config[environment].REDIS_PORT,
                               decode_responses=True)  # redis中取出的value默认binary格式，设置解码将其转换回string。
+
     # 开启当前项目 CSRF 保护（只做验证，cookie中csrf_token和表单中csrf_token需要手动实现）
-    # CSRFProtect(app)
+    CSRFProtect(app)
+    # 上一行帮我们做了：从cookie中取出随机值，从表单中取出随机值，然后校验，并响应校验结果
+    # 我们还需要做：
+    # 1. 在返回响应时往cookie中添加一个csrf_token。
+    # 2. 在表单中添加隐藏的csrf_token。因我们现在使用的是ajax请求，而非传统表单，故需在ajax请求时，带上csrf_token随机值。
+
+    @app.after_request
+    def after_request(response):
+        csrf_token = generate_csrf()  # flask.ext.wtf.csrf中一个模块，用于专门生成csrf_token值
+        response.set_cookie("csrf_token", csrf_token)
+        return response
+
     # 设置用Session将 app 中数据保存到指定位置
     Session(app)
     # 注册网站首页蓝图。hint：蓝图在注册前的导入命令切勿置顶！否则会陷入import死循环！最好紧挨着注册行导入！

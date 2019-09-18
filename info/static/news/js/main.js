@@ -132,6 +132,9 @@ $(function(){
             url: "/passport/login",
             type: "post",
             contentType: "application/json",
+            headers:{
+                "X-CSRFToken": getCookie("csrf_token")  // 在header中添加csrf_token的随机值
+            },
             data: JSON.stringify(params),
             success: function(resp){
                 if (resp.errno == "0"){
@@ -189,6 +192,9 @@ $(function(){
             url: "/passport/register",
             type: "post",
             contentType: "application/json",
+            headers:{
+                "X-CSRFToken": getCookie("csrf_token")  // 在header中添加csrf_token的随机值
+            },
             data: JSON.stringify(params),
             success: function(resp){
                 if (resp.errno == "0"){
@@ -249,6 +255,9 @@ function sendSMSCode() {
         method: "POST",  // 请求方式，等价于【type: "post"】
         data: JSON.stringify(params),  // 请求参数
         contentType: "application/json",  // 请求参数的数据类型
+        headers:{
+                "X-CSRFToken": getCookie("csrf_token")  // 在header中添加csrf_token的随机值
+            },
         success: function(response){  // 倒计时
             if (response.errno == "0"){  // 代表发射成功
                 var num = 60;  // 倒计时60秒
