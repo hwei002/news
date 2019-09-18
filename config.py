@@ -11,6 +11,7 @@ class Config(object):
     # 为 SQL 数据库添加配置
     SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/news"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = True  # 设置【每次请求结束，自动执行一次db.session.commit命令】
 
     # 为 redis 数据库添加配置
     REDIS_HOST = "127.0.0.1"

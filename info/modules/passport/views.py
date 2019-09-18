@@ -50,6 +50,13 @@ def login():
     session["mobile"] = user.mobile
     session["nick_name"] = user.nick_name
 
+    user.last_login = datetime.now()  # 更新用户最近一次登录时间
+    # try:
+    #     db.session.commit()  # 如果config中设置SQLALCHEMY_COMMIT_ON_TEARDOWN=True，此处try/except可省略
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #     db.session.rollback()
+
     # 7. 返回响应
     return jsonify(errno=RET.OK, errmsg="登录成功")
 
