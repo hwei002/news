@@ -1,28 +1,26 @@
 # 3.导入蓝图对象，并用它注册路由，装饰视图函数
+from info.models import User
+from flask import render_template, current_app, session
 from . import index_blu
-from flask import render_template, current_app
 
 
 @index_blu.route('/')
 def index():
-    # redis_store.set("name", "laowang")  # 直接set，保存到redis中的数据是明文
-    # session["name"] = "laowang"  # 用session，保存到redis中的数据会自动加密
 
-    # 测试打印日志
-    # logging.debug('测试debug')
-    # logging.info('测试info')
-    # logging.warning('测试warning')
-    # logging.error('测试error')
-    # logging.fatal('测试fatal')
+    user_id = session.get("user_id", None)  # 尝试获取当前登录用户的user_id
 
-    # Flask框架封装logging --> 美化输出 & logger能根据app是否debug自动调整日志等级
-    # current_app.logger.debug('测试debug')
-    # current_app.logger.info('测试info')
-    # current_app.logger.warning('测试warning')
-    # current_app.logger.error('测试error')
-    # current_app.logger.fatal('测试fatal')
+    user = None  # 先定义，保证后续data中的使用不会报 undefined error
+    if user_id:
+        try:
+            user = User.query.get(user_id)  # 通过 user_id 获取用户信息
+        except Exception as e:
+            current_app.logger.error(e)
 
-    return render_template('news/index.html')
+    data = {
+        "user": user.to_dict() if user else None  # 将user转为字典形式传给前端html模板，供 js 分支判断使用
+    }
+
+    return render_template('news/index.html', data=data)
 
 
 # 在打开网页时，浏览器会默认去请求【根路径+favicon.ico】作为网站标签的小图标
