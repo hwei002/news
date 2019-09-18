@@ -103,11 +103,14 @@ $(function(){
 		$(this).find('a')[0].click()
 	})
 
-    // TODO 登录表单提交
+    // 登录按钮点击
     $(".login_form_con").submit(function (e) {
-        e.preventDefault()
-        var mobile = $(".login_form #mobile").val()
-        var password = $(".login_form #password").val()
+        // 阻止默认提交操作————表单提交默认自动刷新全局页面，若验证码/密码有误，则无法显示报错，故需ajax监控页面做局部刷新。
+        e.preventDefault();
+
+        // 取到用户输入的内容
+        var mobile = $(".login_form #mobile").val();
+        var password = $(".login_form #password").val();
 
         if (!mobile) {
             $("#login-mobile-err").show();
@@ -119,8 +122,30 @@ $(function(){
             return;
         }
 
-        // 发起登录请求
-    })
+        // 上述验证通过后，即可正式发起登录请求
+        var params = {
+            "mobile": mobile,
+            "password": password
+        };
+
+        $.ajax({
+            url: "/passport/login",
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(params),
+            success: function(resp){
+                if (resp.errno == "0"){
+                    // 代表登录成功，
+                    location.reload();  // 成功后刷新整个页面（后续将实现：此时状态 “已登录” ）
+                }else {
+                    //代表登录失败
+                    alert(resp.errmsg);
+                    $("#login-password-err").html(resp.errmsg);
+                    $("#login-password-err").show();
+                }
+            }
+        })
+    });
 
 
     // 注册按钮点击
@@ -177,7 +202,6 @@ $(function(){
                 }
             }
         })
-
     })
 });
 
