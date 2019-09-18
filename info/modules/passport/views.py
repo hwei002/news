@@ -9,6 +9,14 @@ from info.utils.response_code import RET
 from . import passport_blu
 
 
+@passport_blu.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('mobile', None)
+    session.pop('nick_name', None)
+    return jsonify(errno=RET.OK, errmsg="退出成功")  # 也可以返回【重定向到首页】
+
+
 @passport_blu.route('/login', methods=["POST"])
 def login():
 
