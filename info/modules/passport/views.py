@@ -9,6 +9,43 @@ from info.utils.response_code import RET
 from . import passport_blu
 
 
+@passport_blu.route('/login', methods=["POST"])
+def login():
+
+    # 1. 获取参数
+    params_dict = request.json
+    mobile, password = params_dict["mobile"], params_dict["password"]
+
+    # 2. 校验参数是否为空
+    if not all([mobile, password]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数不能为空，参数错误")
+
+    # 3. 校验手机号格式是否正确
+    if not re.match("^1[35678][0-9]{9}$", mobile):
+        return jsonify(errno=RET.PARAMERR, errmsg="手机号码格式错误")
+
+    # 4. 校验该手机号是否存在于数据库里（是否已注册）
+    try:
+        user = User.query.filter(User.mobile == mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询错误")
+    if not user:
+        return jsonify(errno=RET.NODATA, errmsg="该用户不存在")
+
+    # 5. 校验用户输入的密码是否与数据库中密码吻合
+    if not user.check_password(password):
+        return jsonify(errno=RET.PWDERR, errmsg="密码错误")
+
+    # 6. 保存用户登录状态到session中
+    session["user_id"] = user.id
+    session["mobile"] = user.mobile
+    session["nick_name"] = user.nick_name
+
+    # 7. 返回响应
+    return jsonify(errno=RET.OK, errmsg="登录成功")
+
+
 @passport_blu.route('/register', methods=['POST'])
 def register():
 
