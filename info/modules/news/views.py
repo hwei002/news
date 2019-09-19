@@ -30,11 +30,17 @@ def news_detail(news_id):
         abort(404)  # 数据未找到有一个统一的404页面，后续再去实现此功能
     news.clicks += 1  # 更新点击次数
 
+    # 判断用户是否收藏本条新闻
+    is_collected = False
+    if user and news in user.collection_news:  # User和News是多对多关系，此处collection_news在Model已定义好
+        is_collected = True  # 上一行最后不用.all()表lazy模式【用的时候再去查询】，用了.all()则会立即查询，影响性能
+
     # 把数据进行汇总，当参数传给模板，供渲染时使用
     data = {
         "user": user.to_dict() if user else None,  # 将user转为字典形式传给前端html模板，供 js 分支判断使用
         "top_click_news": top_click_news,
         "news": news.to_dict(),
+        "is_collected": is_collected,
     }
     return render_template('news/detail.html', data=data)
 
