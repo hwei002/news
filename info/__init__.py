@@ -68,11 +68,18 @@ def create_app(environment):
 
     # 设置用Session将 app 中数据保存到指定位置
     Session(app)
+
     # 注册网站首页蓝图。hint：蓝图在注册前的导入命令切勿置顶！否则会陷入import死循环！最好紧挨着注册行导入！
     from info.modules.index import index_blu
     app.register_blueprint(index_blu)
+
     # 注册登录注册模块的蓝图
     from info.modules.passport import passport_blu
     app.register_blueprint(passport_blu)
+
+    # 注册新闻模块的蓝图
+    from info.modules.news import news_blu
+    app.register_blueprint(news_blu)
+
     return app  # 保留db在函数内 & “return app, db” --- 同样奏效
 
