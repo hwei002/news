@@ -1,7 +1,7 @@
 var currentCid = 1; // 当前分类 id
 var cur_page = 1; // 当前页
 var total_page = 1;  // 总页数
-var data_querying = true;   // 是否正在向后台获取数据
+var data_querying = false;   // 是否正在向后台获取数据
 
 
 $(function () {
@@ -43,7 +43,12 @@ $(function () {
         var nowScroll = $(document).scrollTop();
 
         if ((canScrollHeight - nowScroll) < 100) {
-            // TODO 判断页数，去更新新闻数据
+            // 判断页数，去更新新闻数据
+            if (data_querying == false & cur_page < total_page) {  // 只有当眼下未做query且后面还有页数供query时，才update
+                data_querying = true;
+                cur_page += 1;
+                updateNewsData();
+            }
         }
     })
 });
@@ -56,7 +61,11 @@ function updateNewsData() {
     };
     $.get("/news_list", params, function(resp){  // resp 就是【'/news_list'】对应的视图函数返回的json文件
         if (resp.errno=="0"){ // 代表请求成功
-            $(".list_con").html(""); // 首先清除已有的旧html数据
+            data_querying = false;  // 请求成功后，将正在query的 flag 改回 false
+            total_page = resp.data.total_page;  // 请求成功后，更新total_page（默认为1，首次query后更新total_page为正确的值）
+            if (cur_page == 1) {
+                $(".list_con").html(""); // 仅当载入第一页操作前，才需清除旧数据（滚动载入非第一页的请求，无需清除旧数据！！）
+            }
             for (var i=0; i<resp.data.current_page_news.length; i++) {  // 用拼接字符串的方式，添加请求返回的新数据
                 var news = resp.data.current_page_news[i];
                 var content = '<li>';
