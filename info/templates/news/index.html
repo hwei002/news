@@ -4,7 +4,7 @@
 首页-新经资讯
 {% endblock %}
 
-{% block scriptBlock %}  <!--首页新闻列表，需向下滚动刷新，统一放在index.js中实现-->
+{% block scriptBlock %}  <!--index.js负责新闻列表向下滚动刷新-->
 <script type="text/javascript" src="../../static/news/js/index.js"></script>
 {% endblock %}
 
@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block contentBlock %}
-<ul class="list_con fl"> <!--新闻列表中，含有的多个 li，在 index.js 中用 for loop 实现-->
+<ul class="list_con fl"> <!--index.js用for循环实现新闻列表-->
 </ul>
 {% endblock %}
 
