@@ -3,48 +3,32 @@ var cur_page = 1; // 当前页
 var total_page = 1;  // 总页数
 var data_querying = false;   // 是否正在向后台获取数据
 
-
 $(function () {
-    // 界面加载完成之后，去加载新闻数据
-    updateNewsData();
+    updateNewsData();  // 首页index界面加载完成后，第一次加载新闻列表
 
-    // 首页分类切换
+    // 首页新闻分类之间的切换功能
     $('.menu li').click(function () {
         var clickCid = $(this).attr('data-cid');
         $('.menu li').each(function () {
             $(this).removeClass('active')
         });
         $(this).addClass('active');
-
-        if (clickCid != currentCid) {
-            // 记录当前分类id
-            currentCid = clickCid;
-
-            // 重置分页参数
-            cur_page = 1;
+        if (clickCid != currentCid) {  // 仅当【被点击分类，不是当前active分类】时，才去加载被点击分类
+            currentCid = clickCid;  // 记录当前分类id
+            cur_page = 1; // 重置分页参数
             total_page = 1;
-            updateNewsData()
+            updateNewsData();
         }
     });
 
-    //页面滚动加载相关
+    //页面滚动触发自动加载的功能
     $(window).scroll(function () {
-
-        // 浏览器窗口高度
-        var showHeight = $(window).height();
-
-        // 整个网页的高度
-        var pageHeight = $(document).height();
-
-        // 页面可以滚动的距离
-        var canScrollHeight = pageHeight - showHeight;
-
-        // 页面滚动了多少,这个是随着页面滚动实时变化的
-        var nowScroll = $(document).scrollTop();
-
-        if ((canScrollHeight - nowScroll) < 100) {
-            // 判断页数，去更新新闻数据
-            if (data_querying == false & cur_page < total_page) {  // 只有当眼下未做query且后面还有页数供query时，才update
+        var showHeight = $(window).height(); // 浏览器窗口高度
+        var pageHeight = $(document).height(); // 整个网页的高度
+        var canScrollHeight = pageHeight - showHeight;  // 页面可以滚动的距离
+        var nowScroll = $(document).scrollTop();  // 页面已经滚动了多少（该数值是随页面滚动实时变化的）
+        if ((canScrollHeight - nowScroll) < 100) {  // 滚动触发自动加载的条件
+            if (data_querying == false & cur_page < total_page) {  // 只有【眼下无未完成query & 后面还有页数供query】时，才继续
                 data_querying = true;
                 cur_page += 1;
                 updateNewsData();
@@ -53,8 +37,7 @@ $(function () {
     })
 });
 
-function updateNewsData() {
-    // 更新新闻数据
+function updateNewsData() {  // 更新新闻数据
     var params = {  // 需要通过url传递给route视图函数的参数
         "cid": currentCid,
         "page": cur_page
