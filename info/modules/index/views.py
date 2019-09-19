@@ -1,7 +1,8 @@
 # 3.导入蓝图对象，并用它注册路由，装饰视图函数
-from flask import render_template, current_app, session, request, jsonify
+from flask import render_template, current_app, request, jsonify, g
 from info import constants
-from info.models import User, News, Category
+from info.models import News, Category
+from info.utils.common import user_login_data
 from info.utils.response_code import RET
 from . import index_blu
 
@@ -48,15 +49,17 @@ def news_list():
 
 
 @index_blu.route('/')
+@user_login_data
 def index():
     # 右上角功能区的实现：【登录/注册】or【用户头像/昵称/退出】
-    user_id = session.get("user_id", None)  # 尝试获取当前登录用户的user_id
-    user = None  # 先定义，保证后续data中的使用不会报 undefined error
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # 通过 user_id 获取用户信息
-        except Exception as e:
-            current_app.logger.error(e)
+    # user_id = session.get("user_id", None)  # 尝试获取当前登录用户的user_id
+    # user = None  # 先定义，保证后续data中的使用不会报 undefined error
+    # if user_id:
+    #     try:
+    #         user = User.query.get(user_id)  # 通过 user_id 获取用户信息
+    #     except Exception as e:
+    #         current_app.logger.error(e)
+    user = g.user
 
     # 右侧新闻点击排行功能的实现
     top_click_news = []
