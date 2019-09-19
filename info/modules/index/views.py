@@ -12,7 +12,7 @@ def news_list():
     # 1. 获取url中？后面的参数：新闻分类cid，页码page，每页条数per_page
     cid = request.args.get("cid", "1")
     page = request.args.get("page", "1")
-    per_page = request.args.get("per_page", "10")
+    per_page = request.args.get("per_page", constants.HOME_PAGE_MAX_NEWS)
 
     # 2. 校验参数
     try:

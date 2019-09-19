@@ -1,28 +1,31 @@
-var currentCid = 0; // 当前分类 id
+var currentCid = 1; // 当前分类 id
 var cur_page = 1; // 当前页
 var total_page = 1;  // 总页数
 var data_querying = true;   // 是否正在向后台获取数据
 
 
 $(function () {
+    // 界面加载完成之后，去加载新闻数据
+    updateNewsData();
+
     // 首页分类切换
     $('.menu li').click(function () {
-        var clickCid = $(this).attr('data-cid')
+        var clickCid = $(this).attr('data-cid');
         $('.menu li').each(function () {
             $(this).removeClass('active')
-        })
-        $(this).addClass('active')
+        });
+        $(this).addClass('active');
 
         if (clickCid != currentCid) {
             // 记录当前分类id
-            currentCid = clickCid
+            currentCid = clickCid;
 
             // 重置分页参数
-            cur_page = 1
-            total_page = 1
+            cur_page = 1;
+            total_page = 1;
             updateNewsData()
         }
-    })
+    });
 
     //页面滚动加载相关
     $(window).scroll(function () {
@@ -43,8 +46,32 @@ $(function () {
             // TODO 判断页数，去更新新闻数据
         }
     })
-})
+});
 
 function updateNewsData() {
-    // TODO 更新新闻数据
+    // 更新新闻数据
+    var params = {  // 需要通过url传递给route视图函数的参数
+        "cid": currentCid,
+        "page": cur_page
+    };
+    $.get("/news_list", params, function(resp){  // resp 就是【'/news_list'】对应的视图函数返回的json文件
+        if (resp.errno=="0"){ // 代表请求成功
+            $(".list_con").html(""); // 首先清除已有的旧html数据
+            for (var i=0; i<resp.data.current_page_news.length; i++) {  // 用拼接字符串的方式，添加请求返回的新数据
+                var news = resp.data.current_page_news[i];
+                var content = '<li>';
+                content += '<a href="#" class="news_pic fl"><img src="' + news.index_image_url + '?imageView2/1/w/170/h/170"></a>';
+                content += '<a href="#" class="news_title fl">' + news.title + '</a>';
+                content += '<a href="#" class="news_detail fl">' + news.digest + '</a>';
+                content += '<div class="author_info fl">';
+                content += '<div class="source fl">来源：' + news.source + '</div>';
+                content += '<div class="time fl">' + news.create_time + '</div>';
+                content += '</div>';
+                content += '</li>';
+                $(".list_con").append(content)
+            }
+        }else{
+            alert(resp.errmsg); // 代表请求失败
+        }
+    })
 }
