@@ -1,9 +1,56 @@
 from flask import current_app, render_template, g, abort, jsonify, request
 from info import constants, db
-from info.models import News, Comment
+from info.models import News, Comment, CommentLike
 from info.modules.news import news_blu
 from info.utils.common import user_login_data
 from info.utils.response_code import RET
+
+
+@news_blu.route('/like_comment', methods=["POST"])
+@user_login_data
+def like_comment():
+
+    # 1. 判断用户是否登录
+    user = g.user
+    if not user:
+        return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
+
+    # 2. 获取参数
+    comment_id = request.json.get("comment_id", None)
+    action = request.json.get("action", None)
+
+    # 3. 校验参数
+    if not comment_id or action not in ["add", "remove"]:  # 参数非空且action二选一
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    try:
+        comment_id = int(comment_id)  # comment_id 必须为整数
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    try:
+        comment = Comment.query.get(comment_id)  # 查询comment_id对应的评论
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
+    if not comment:  # 指定评论必须存在
+        return jsonify(errno=RET.NODATA, errmsg="评论不存在")
+
+    # 4. 完成点赞/取消点赞操作
+    try:
+        like_obj = CommentLike.query.filter(CommentLike.user_id==user.id, CommentLike.comment_id==comment_id).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
+    if action == "add":
+        if like_obj is None:  # 增加点赞
+            like_obj = CommentLike()
+            like_obj.user_id = user.id
+            like_obj.comment_id = comment_id
+            db.session.add(like_obj)
+    else:
+        if like_obj is not None:  # 取消点赞
+            db.session.delete(like_obj)
+    return jsonify(errno=RET.OK, errmsg="操作成功")
 
 
 @news_blu.route('/news_comment', methods=["POST"])
