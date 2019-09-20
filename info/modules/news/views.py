@@ -125,12 +125,21 @@ def news_detail(news_id):
     if user and news in user.collection_news:  # User和News是多对多关系，此处collection_news在Model已定义好
         is_collected = True  # 上一行最后不用.all()表lazy模式【用的时候再去查询】，用了.all()则会立即查询，影响性能
 
+    # 从数据库中，查询出该条新闻所有评论，返回给前端，供渲染显示
+    comments = []
+    try:
+        comments = Comment.query.filter(Comment.news_id==news_id).order_by(Comment.create_time.desc()).all()
+    except Exception as e:
+        current_app.logger.error(e)
+    comments = [comment.to_dict() for comment in comments]
+
     # 把数据进行汇总，当参数传给模板，供渲染时使用
     data = {
         "user": user.to_dict() if user else None,  # 将user转为字典形式传给前端html模板，供 js 分支判断使用
         "top_click_news": top_click_news,
         "news": news.to_dict(),
         "is_collected": is_collected,
+        "comments": comments,
     }
     return render_template('news/detail.html', data=data)
 
