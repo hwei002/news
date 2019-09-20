@@ -1,9 +1,61 @@
 from flask import current_app, render_template, g, abort, jsonify, request
-from info import constants
-from info.models import News
+from info import constants, db
+from info.models import News, Comment
 from info.modules.news import news_blu
 from info.utils.common import user_login_data
 from info.utils.response_code import RET
+
+
+@news_blu.route('/news_comment', methods=["POST"])
+@user_login_data
+def news_comment():
+
+    # 1. 判断用户是否登录
+    user = g.user
+    if not user:
+        return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
+
+    # 2. 获取参数
+    news_id = request.json.get("news_id", None)
+    comment = request.json.get("comment", None)
+    parent_id = request.json.get("parent_id", None)
+
+    # 3. 校验参数
+    if not all([news_id, comment]):  # news_id 和 comment 不能为空
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    try:
+        news_id = int(news_id)  # news_id 和 parent_id（如果存在） 必须整数
+        if parent_id:
+            parent_id = int(parent_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    try:
+        news = News.query.get(news_id)  # news_id 对应的新闻必须存在
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询操作失败")
+    if not news:
+        return jsonify(errno=RET.NODATA, errmsg="新闻数据不存在")
+
+    # 4. 创建一个comment对象
+    comment_obj = Comment()
+    comment_obj.user_id = user.id
+    comment_obj.news_id = news_id
+    comment_obj.content = comment
+    if parent_id:
+        comment_obj.parent_id = parent_id
+
+    # 5. 添加comment对象进数据库：必须手动而非依赖commit_on_teardown，因视图函数需返回comment_id
+    try:
+        db.session.add(comment_obj)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="数据库添加失败")
+
+    return jsonify(errno=RET.OK, errmsg="评论添加成功", comment=comment_obj.to_dict())
 
 
 @news_blu.route('/news_collect', methods=["POST"])
