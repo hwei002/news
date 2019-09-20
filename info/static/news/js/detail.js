@@ -107,6 +107,7 @@ $(function(){
                     $(".comment_list_con").prepend(comment_html);  // 把新评论加到评论列表的最前端
                     $('.comment_sub').blur();  // 让 comment 的 submit 按钮，失去焦点
                     $(".comment_input").val(""); // 清空输入框
+                    updateCommentCount();  // 更新该新闻的总评论数
                 }else {
                     alert(resp.errmsg)
                 }
@@ -190,6 +191,7 @@ $(function(){
                         $(".comment_list_con").prepend(comment_html);
                         $this.prev().val("");  // 清空输入框
                         $this.parent().hide();  // 隐藏【点击“回复”按钮所弹出的输入子评论】模块
+                        updateCommentCount();  // 更新该新闻的总评论数
                     }else {
                         alert(resp.errmsg);
                     }
@@ -208,3 +210,9 @@ $(function(){
 
     })
 });
+
+
+function updateCommentCount(){  // for循环中每条评论class=“comment_list”，用$取出的是评论元素的列表
+    var count = $(".comment_list").length;
+    $(".comment_count").html(count+"条评论");
+}
