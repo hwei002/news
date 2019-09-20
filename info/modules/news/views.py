@@ -47,9 +47,11 @@ def like_comment():
             like_obj.user_id = user.id
             like_obj.comment_id = comment_id
             db.session.add(like_obj)
+            comment.like_count += 1  # 更新该评论的点赞数
     else:
         if like_obj is not None:  # 取消点赞
             db.session.delete(like_obj)
+            comment.like_count -= 1  # 更新该评论的点赞数
     return jsonify(errno=RET.OK, errmsg="操作成功")
 
 

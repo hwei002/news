@@ -129,16 +129,41 @@ $(function(){
             $(this).parent().toggle();
         }
 
-        if(sHandler.indexOf('comment_up')>=0)
+        // 点赞与取消点赞的切换
+        if(sHandler.indexOf('comment_up') >= 0)
         {
             var $this = $(this);
-            if(sHandler.indexOf('has_comment_up')>=0)
+            var action = "add";  // 默认处于【未被赞】状态，故点击的默认触发是【未被赞-->被赞】
+            if(sHandler.indexOf('has_comment_up') >= 0)  // 表示【已经有赞】
             {
-                // 如果当前该评论已经是点赞状态，再次点击会进行到此代码块内，代表要取消点赞
-                $this.removeClass('has_comment_up')
-            }else {
-                $this.addClass('has_comment_up')
+                action = "remove";  // 如果当前已是被赞状态，点击应触发【被赞-->未被赞】，即取消点赞
             }
+            var params = {
+                "comment_id": $this.attr("data-commentid"),
+                "action": action
+            };
+            $.ajax({
+                url: "/news/like_comment",
+                type: "post",
+                contentType: "application/json",
+                data: JSON.stringify(params),
+                headers: {
+                    "X-CSRFToken": getCookie("csrf_token")
+                },
+                success: function (resp) {
+                    if (resp.errno == "0") {  // 更新点赞按钮图标
+                        if (action == "add") {  // 点赞操作，让其新增【已经有赞】类标签
+                            $this.addClass('has_comment_up');
+                        }else {  // 取消点赞操作，让其失去【已经有赞】类标签
+                            $this.removeClass('has_comment_up')
+                        }
+                    }else if (resp.errno == "4101"){
+                        $('.login_form_con').show();  // 如果用户未登录，则弹出登录框
+                    }else {
+                        alert(resp.errmsg)
+                    }
+                }
+            })
         }
         // 对父评论进行子评论
         if(sHandler.indexOf('reply_sub') >= 0)
