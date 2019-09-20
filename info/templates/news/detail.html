@@ -29,8 +29,7 @@
     </a>
 
     {% if data.user %}  <!--判断用户是否登录，如未登录则提示其登录再评论。如已登录则载入其头像及输入文本框-->
-        <form action="" class="comment_form">
-            <input type="hidden" value="{{ data.news.id }}" id="news_id">
+        <form action="" class="comment_form" data-newsid="{{ data.news.id }}">
             <div class="person_pic">
                 <img src="{% if data.user.avatar_url %}
                                 data.user.avatar_url
