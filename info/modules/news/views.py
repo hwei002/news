@@ -1,8 +1,46 @@
-from flask import current_app, render_template, g, abort
+from flask import current_app, render_template, g, abort, jsonify, request
 from info import constants
 from info.models import News
 from info.modules.news import news_blu
 from info.utils.common import user_login_data
+from info.utils.response_code import RET
+
+
+@news_blu.route('/news_collect', methods=["POST"])
+@user_login_data
+def news_collect():
+
+    # 1. 判断用户是否登录
+    user = g.user
+    if not user:
+        return jsonify(errno=RET.SESSIONERR, errmsg="用户不存在")
+
+    # 2. 获取参数
+    news_id = request.json.get("news_id", None)
+    action = request.json.get("action", None)
+
+    # 3. 校验参数
+    if not news_id or action not in ["collect", "cancel_collect"]:
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    try:
+        news_id = int(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    # 4. 查询新闻对象
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.NODATA, errmsg="新闻数据不存在")
+
+    # 5. 完成收藏/取消收藏操作
+    if action == "collect" and news not in user.collection_news:
+        user.collection_news.append(news)
+    if action == "cancel_collect" and news in user.collection_news:
+        user.collection_news.remove(news)
+    return jsonify(errno=RET.OK, errmsg="操作成功")
 
 
 @news_blu.route('/<int:news_id>')  # int冒号后不能加空格！！
