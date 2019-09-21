@@ -81,5 +81,9 @@ def create_app(environment):
     from info.modules.news import news_blu
     app.register_blueprint(news_blu)
 
-    return app  # 保留db在函数内 & “return app, db” --- 同样奏效
+    # 注册用户profile模块的蓝图
+    from info.modules.profile import profile_blu
+    app.register_blueprint(profile_blu)
+
+    return app
 

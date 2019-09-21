@@ -17,12 +17,12 @@
             {% if data.user %}  <!--如果user不等于None，那么说明当前存在已登录用户，故需加载用户头像和昵称，显示到右上角-->
                 <div class="user_login fr">
                     <img src="{% if data.user.avatar_url %}
-                                    data.user.avatar_url
+                                    {{ data.user.avatar_url }}
                               {% else %}
                                     ../../static/news/images/person01.png
                               {% endif %}"
                     class="lgin_pic">  <!--如果该登录用户有头像url，则使用之。如果没有，则使用默认的头像url-->
-                    <a href="#">{{ data.user.nick_name }}</a>
+                    <a href="/user/info">{{ data.user.nick_name }}</a>
                     <a href="javascript:;" onclick="logout()">退出</a>  <!--点击触发logout函数，其内执行location.reload()-->
                 </div>
             {% else %}
@@ -35,17 +35,20 @@
 
     <div class="conter_con">
         {% block contentBlock %}{% endblock %}
-        <div class="rank_con fr">
-            {% block authorBlock %}{% endblock %}
-            <div class="rank_title">
-                <h3>点击排行</h3>
+        {% block rankblock %}
+            <div class="rank_con fr">
+                {% block authorBlock %}{% endblock %}
+                <div class="rank_title">
+                    <h3>点击排行</h3>
+                </div>
+                <ul class="rank_list">
+                    {% for news in data.top_click_news %}  <!--用【管道+自定义过滤器】设定前三名class分别为first/second/third-->
+                        <li><span class = {{ loop.index | index_class }}>{{ loop.index }}</span><a href="#">{{ news.title }}</a></li>
+                    {% endfor %}
+                </ul>
             </div>
-            <ul class="rank_list">
-                {% for news in data.top_click_news %}  <!--用【管道+自定义过滤器】设定前三名class分别为first/second/third-->
-                    <li><span class = {{ loop.index | index_class }}>{{ loop.index }}</span><a href="#">{{ news.title }}</a></li>
-                {% endfor %}
-            </ul>
-        </div>
+        {% endblock %}
+
     </div>
 
     <div class="footer">
