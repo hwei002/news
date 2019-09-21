@@ -175,12 +175,32 @@ def news_detail(news_id):
         is_collected = True  # 上一行最后不用.all()表lazy模式【用的时候再去查询】，用了.all()则会立即查询，影响性能
 
     # 从数据库中，查询出该条新闻所有评论，返回给前端，供渲染显示
-    comments = []
+    comments_obj = []
     try:
-        comments = Comment.query.filter(Comment.news_id==news_id).order_by(Comment.create_time.desc()).all()
+        comments_obj = Comment.query.filter(Comment.news_id==news_id).order_by(Comment.create_time.desc()).all()
     except Exception as e:
         current_app.logger.error(e)
-    comments = [comment.to_dict() for comment in comments]
+
+    # 每条评论的点赞显示（登录情况下，本用户点过赞则拇指高亮，未点过赞则拇指灰暗）
+    comment_like_ids = []  # 本新闻的评论中，该用户点过赞的所有评论的id列表
+    if user:
+        try:
+            # 获取本新闻所有评论的id
+            comment_ids = [comment_obj.id for comment_obj in comments_obj]
+            # 查询出本新闻的评论中，该用户点过赞的所有评论（返回的是一个CommentLike对象列表）
+            comment_likes = CommentLike.query.filter(CommentLike.user_id==user.id, CommentLike.comment_id.in_(comment_ids)).all()
+            # 获取该用户点过赞的所有评论的id
+            comment_like_ids = [comment_like.comment_id for comment_like in comment_likes]
+        except Exception as e:
+            current_app.logger.error(e)
+
+    comments_dic = []
+    for comment_obj in comments_obj:
+        comment_dic = comment_obj.to_dict()
+        comment_dic["is_like"] = False  # 添加键值对表示是否点过赞，默认False
+        if comment_obj.id in comment_like_ids:
+            comment_dic["is_like"] = True  # 如果该评论的id，出现在【该用户点过赞的所有评论的id列表】中，则改为True
+        comments_dic.append(comment_dic)
 
     # 把数据进行汇总，当参数传给模板，供渲染时使用
     data = {
@@ -188,7 +208,7 @@ def news_detail(news_id):
         "top_click_news": top_click_news,
         "news": news.to_dict(),
         "is_collected": is_collected,
-        "comments": comments,
+        "comments": comments_dic,
     }
     return render_template('news/detail.html', data=data)
 
