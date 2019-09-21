@@ -15,6 +15,9 @@ logs/log*
 # 设置push时不带上本地的数据库迁移文件夹
 migrations
 
+# 设置push时不带上七牛云的本地缓存文件
+.qiniu*
+
 # Distribution / packaging
 .Python
 build/
