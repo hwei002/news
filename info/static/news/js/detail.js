@@ -151,14 +151,23 @@ $(function(){
                     "X-CSRFToken": getCookie("csrf_token")
                 },
                 success: function (resp) {
-                    if (resp.errno == "0") {  // 更新点赞按钮图标
-                        if (action == "add") {  // 点赞操作，让其新增【已经有赞】类标签
-                            $this.addClass('has_comment_up');
-                        }else {  // 取消点赞操作，让其失去【已经有赞】类标签
-                            $this.removeClass('has_comment_up')
+                    if (resp.errno == "0") {
+                        var like_count = $this.attr('data-likecount');
+                        if (action == "add") {  // 更新点赞按钮图标
+                            like_count = parseInt(like_count) + 1;
+                            $this.addClass('has_comment_up');  // 点赞操作，新增【用户已赞】类标签
+                        }else {// 取消点赞操作，移除【用户已赞】类标签
+                            like_count = parseInt(like_count) - 1;
+                            $this.removeClass('has_comment_up');
+                        }
+                        $this.attr('data-likecount', like_count);  // 更新点赞数据
+                        if (like_count == 0) {
+                            $this.html("赞")
+                        }else {
+                            $this.html(like_count)
                         }
                     }else if (resp.errno == "4101"){
-                        $('.login_form_con').show();  // 如果用户未登录，则弹出登录框
+                        $('.login_form_con').show(); // 如果用户未登录，则弹出登录框
                     }else {
                         alert(resp.errmsg)
                     }
