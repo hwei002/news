@@ -22,7 +22,7 @@
                                     ../../static/news/images/person01.png
                               {% endif %}"
                     class="lgin_pic">  <!--如果该登录用户有头像url，则使用之。如果没有，则使用默认的头像url-->
-                    <a href="/user/info">{{ data.user.nick_name }}</a>
+                    <a href="/user/info" id="nick_name">{{ data.user.nick_name }}</a>
                     <a href="javascript:;" onclick="logout()">退出</a>  <!--点击触发logout函数，其内执行location.reload()-->
                 </div>
             {% else %}
