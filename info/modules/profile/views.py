@@ -6,6 +6,34 @@ from info.utils.image_storage import storage
 from info.utils.response_code import RET
 
 
+@profile_blu.route('/pass_info', methods=["GET", "POST"])
+@user_login_data
+def pass_info():
+    if request.method == "GET":
+        return render_template("news/user_pass_info.html")
+    elif request.method == "POST":
+        old_password = request.json.get("old_password", None)
+        new_password = request.json.get("new_password", None)
+        if not all([old_password, new_password]):
+            return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+        if old_password == new_password:
+            return jsonify(errno=RET.PARAMERR, errmsg="新旧密码相同")
+        user = g.user
+        if not user.check_password(old_password):
+            return jsonify(errno=RET.PWDERR, errmsg="原密码校验失败")
+        user.password = new_password
+        return jsonify(errno=RET.OK, errmsg="密码修改成功")
+
+
+
+
+
+
+
+
+
+
+
 @profile_blu.route('/pic_info', methods=["GET", "POST"])
 @user_login_data
 def pic_info():
