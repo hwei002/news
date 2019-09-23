@@ -6,6 +6,34 @@ from info.utils.image_storage import storage
 from info.utils.response_code import RET
 
 
+@profile_blu.route('/collection')
+@user_login_data
+def user_collection():
+    page = request.args.get("p", 1)
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1  # 如果浏览器传入的page不能转为int型，则默认显示第 1 页
+    try:  # paginate方法需传入三个参数：请求页码、每页允许的条数、是否报错
+        page_obj = g.user.collection_news.paginate(page, constants.USER_COLLECTION_MAX_NEWS, False)
+        current_page = page_obj.page  # 当前页码
+        total_page = page_obj.pages  # 总页数
+        current_page_news = page_obj.items  # 当前页的所有条目对象
+        current_page_news = [news.to_basic_dict() for news in current_page_news]  # 对象转为字典再返回
+    except Exception as e:
+        current_app.logger.error(e)
+        current_page = 1  # 出错时，为三个变量设定默认值
+        total_page = 1
+        current_page_news = []
+    data = {
+        "current_page": current_page,
+        "total_page": total_page,
+        "collection": current_page_news
+    }
+    return render_template("news/user_collection.html", data=data)
+
+
 @profile_blu.route('/pass_info', methods=["GET", "POST"])
 @user_login_data
 def pass_info():
@@ -23,15 +51,6 @@ def pass_info():
             return jsonify(errno=RET.PWDERR, errmsg="原密码校验失败")
         user.password = new_password
         return jsonify(errno=RET.OK, errmsg="密码修改成功")
-
-
-
-
-
-
-
-
-
 
 
 @profile_blu.route('/pic_info', methods=["GET", "POST"])
