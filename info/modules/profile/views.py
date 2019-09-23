@@ -1,9 +1,24 @@
 from flask import current_app, g, redirect, render_template, request, jsonify
 from info import constants
+from info.models import Category
 from info.modules.profile import profile_blu
 from info.utils.common import user_login_data
 from info.utils.image_storage import storage
 from info.utils.response_code import RET
+
+
+@profile_blu.route('/news_release')
+def news_release():
+    categories = []  # 在渲染时，需把所有新闻分类传回前端，供用户发布新闻时选择相应分类
+    try:
+        categories = Category.query.all()
+    except Exception as e:
+        current_app.logger.error(e)
+    categories = [category.to_dict() for index, category in enumerate(categories) if index > 0]
+    data = {
+        "categories": categories  # 传回前端时，去掉分类“最新”（index=0）
+    }
+    return render_template("news/user_news_release.html", data=data)
 
 
 @profile_blu.route('/collection')
