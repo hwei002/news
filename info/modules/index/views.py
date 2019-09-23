@@ -26,6 +26,7 @@ def news_list():
 
     # 3. 查询数据
     filters = [News.category_id==cid] if cid != 1 else []  # cid=1表示“最新”新闻，无需过滤。。。而cid=2,3,4……才需要过滤
+    filters.append(News.status == 0)  # 只有通过审核的新闻，才会被公开显示。status=1审核中，status=-1审核不通过
     try:
         paginate = News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page, per_page, False)
     except Exception as e:

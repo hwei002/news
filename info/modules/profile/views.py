@@ -1,24 +1,63 @@
 from flask import current_app, g, redirect, render_template, request, jsonify
-from info import constants
-from info.models import Category
+from info import constants, db
+from info.models import Category, News
 from info.modules.profile import profile_blu
 from info.utils.common import user_login_data
 from info.utils.image_storage import storage
 from info.utils.response_code import RET
 
 
-@profile_blu.route('/news_release')
+@profile_blu.route('/news_release', methods=["GET", "POST"])
+@user_login_data
 def news_release():
-    categories = []  # 在渲染时，需把所有新闻分类传回前端，供用户发布新闻时选择相应分类
-    try:
-        categories = Category.query.all()
-    except Exception as e:
-        current_app.logger.error(e)
-    categories = [category.to_dict() for index, category in enumerate(categories) if index > 0]
-    data = {
-        "categories": categories  # 传回前端时，去掉分类“最新”（index=0）
-    }
-    return render_template("news/user_news_release.html", data=data)
+    if request.method == "GET":
+        categories = []  # 在渲染时，需把【所有新闻分类】传回前端，供用户发布新闻时选择相应分类
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+        categories = [category.to_dict() for index, category in enumerate(categories) if index > 0]
+        data = {
+            "categories": categories  # 传回前端时，去掉分类“最新”（index=0）
+        }
+        return render_template("news/user_news_release.html", data=data)
+    else:
+        title = request.form.get("title", None)
+        category_id = request.form.get("category_id", None)
+        digest = request.form.get("digest", None)
+        index_image = request.files.get("index_image", None)
+        content = request.form.get("content", None)  # 课堂所用tinymce的html编辑器，content永远是默认值，不知为啥
+        source = "个人发布"
+        if not all([title, category_id, digest, index_image, content, source]):
+            return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+        try:
+            category_id = int(category_id)
+            index_image = index_image.read()  # 尝试读取图片
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+        try:
+            image_key = storage(index_image)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.THIRDERR, errmsg="图片上传七牛云失败")
+        news = News()
+        news.title = title
+        news.category_id = category_id
+        news.digest = digest
+        news.index_image_url = constants.QINIU_DOMIN_PREFIX + image_key
+        news.content = content
+        news.source = source
+        news.user_id = g.user.id
+        news.status = 1  # 当前新闻状态：0审核通过，1审核中，-1审核不通过
+        try:
+            db.session.add(news)
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+            db.session.rollback()
+            return jsonify(errno=RET.DBERR, errmsg="新闻保存数据库失败")
+        return jsonify(errno=RET.OK, errmsg="新闻发布成功，等待审核")
 
 
 @profile_blu.route('/collection')

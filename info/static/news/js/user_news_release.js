@@ -5,14 +5,24 @@ function getCookie(name) {
 
 
 $(function () {
-
     $(".release_form").submit(function (e) {
-        e.preventDefault()
-
-        // TODO 发布完毕之后需要选中我的发布新闻
-        // // 选中索引为6的左边单菜单
-        // window.parent.fnChangeMenu(6)
-        // // 滚动到顶部
-        // window.parent.scrollTo(0, 0)
+        e.preventDefault();
+        // 发布新闻
+        $(this).ajaxSubmit({  // ajaxSubmit自动带上含有name属性的元素当params
+            url: "/user/news_release",
+            type: "POST",
+            headers: {
+                "X-CSRFToken": getCookie('csrf_token')
+            },
+            success: function (resp) {
+                if (resp.errno == "0") {  // 发布完毕后，自动跳转到该用户所发新闻列表
+                    window.parent.fnChangeMenu(6); // 选中索引为6的左边单菜单
+                    window.parent.scrollTo(0, 0);  // 滚动到顶部
+                }else {
+                    alert(resp.errmsg)
+                }
+            }
+        });
     })
-})
+});
+
