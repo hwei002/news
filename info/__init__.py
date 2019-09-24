@@ -80,7 +80,7 @@ def create_app(environment):
     # 设置用Session将 app 中数据保存到指定位置
     Session(app)
 
-    # 注册网站首页蓝图。hint：蓝图在注册前的导入命令切勿置顶！否则会陷入import死循环！最好紧挨着注册行导入！
+    # 注册网站首页蓝图。导入蓝图小心import死循环！紧挨着注册行导入！
     from info.modules.index import index_blu
     app.register_blueprint(index_blu)
 
@@ -95,6 +95,10 @@ def create_app(environment):
     # 注册用户profile模块的蓝图
     from info.modules.profile import profile_blu
     app.register_blueprint(profile_blu)
+
+    # 注册后台管理admin模块的蓝图
+    from info.modules.admin import admin_blu
+    app.register_blueprint(admin_blu, url_prefix="/admin")
 
     return app
 

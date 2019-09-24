@@ -18,15 +18,15 @@ manager.add_command('db', MigrateCommand)
 
 
 # 将函数定义为命令行可用函数的方法————用装饰器指定命令行传入参数是哪个形参！！
-@manager.option("-n", "-name", dest="name")  # 指定命令行传入的参数对应的形参
+@manager.option("-n", "-username", dest="username")  # 指定命令行传入的参数对应的形参
 @manager.option("-p", "-password", dest="password")  # 同上
-def createsuperuser(name, password):  # 创建管理员账号
-    if not all([name, password]):
+def createsuperuser(username, password):  # 创建管理员账号
+    if not all([username, password]):
         print("参数不能为空")
     else:
         user = User()
-        user.nick_name = name
-        user.mobile = name
+        user.nick_name = username
+        user.mobile = username
         user.password = password
         user.is_admin = True
         try:
