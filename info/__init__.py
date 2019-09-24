@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 from redis import StrictRedis
-from flask import Flask
+from flask import Flask, g, render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.wtf import CSRFProtect
 from flask.ext.wtf.csrf import generate_csrf
@@ -59,6 +59,17 @@ def create_app(environment):
     # 我们还需要做：
     # 1. 在返回响应时往cookie中添加一个csrf_token。
     # 2. 在表单中添加隐藏的csrf_token。因我们现在使用的是ajax请求，而非传统表单，故需在ajax请求时，带上csrf_token随机值。
+
+    from info.utils.common import user_login_data  # 用之前再导入，否则循环导入报错
+
+    @app.errorhandler(404)  # 统一捕获所有404，并返回自定义404页面
+    @user_login_data
+    def page_not_found(e):  # e 接收报错传入的参数“404 NOT FOUND”
+        user = g.user
+        data = {
+            "user": user.to_dict() if user else None
+        }
+        return render_template("news/404.html", data=data)
 
     @app.after_request
     def after_request(response):
