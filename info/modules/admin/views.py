@@ -1,12 +1,15 @@
-from flask import current_app, redirect, render_template, request, session
-from info.models import User
+from flask import current_app, redirect, render_template, request, session, g
 from datetime import datetime
+from info.models import User
+from info.utils.common import user_login_data
 from . import admin_blu
 
 
 @admin_blu.route('/index')
+@user_login_data
 def index():  # 访问任一后台管理页面，均需查验is_admin。每个视图函数都查验，不如统一写进before_request钩子
-    return render_template("admin/index.html")
+    user = g.user
+    return render_template("admin/index.html", user=user.to_dict())
 
 
 @admin_blu.route('/login', methods=["GET", "POST"])
