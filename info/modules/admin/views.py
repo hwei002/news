@@ -5,14 +5,19 @@ from . import admin_blu
 
 
 @admin_blu.route('/index')
-def index():
+def index():  # 访问任一后台管理页面，均需查验is_admin。每个视图函数都查验，不如统一写进before_request钩子
     return render_template("admin/index.html")
 
 
 @admin_blu.route('/login', methods=["GET", "POST"])
 def login():
     if request.method=="GET":
-        return render_template("admin/login.html", errmsg=None)
+        user_id = session.get("user_id", None)
+        is_admin = session.get("is_admin", None)
+        if user_id and is_admin:  # 如果已登录且是管理员，自动跳转到管理员首页
+            return redirect("/admin/index")
+        else:
+            return render_template("admin/login.html", errmsg=None)
     else:
         username = request.form.get("username", None)
         password = request.form.get("password", None)
@@ -25,7 +30,7 @@ def login():
             current_app.logger.error(e)
             return render_template("admin/login.html", errmsg="数据库查询出错")
         if not user:
-            return render_template("admin/login.html", errmsg="用户不存在")
+            return render_template("admin/login.html", errmsg="该管理员账户不存在")
         if not user.check_password(password):
             return render_template("admin/login.html", errmsg="用户名或密码错误")
         session["user_id"] = user.id   # 保存登录状态到session中

@@ -14,6 +14,7 @@ def logout():
     session.pop('user_id', None)
     session.pop('mobile', None)
     session.pop('nick_name', None)
+    session.pop("is_admin", None)  # 清除管理员属性，避免后续非管理员从session取出True通过管理员验证！！！
     return jsonify(errno=RET.OK, errmsg="退出成功")  # 也可以返回【重定向到首页】
 
 
@@ -49,7 +50,7 @@ def login():
     session["user_id"] = user.id
     session["mobile"] = user.mobile
     session["nick_name"] = user.nick_name
-
+    session["is_admin"] = user.is_admin  # 鉴定该用户是否为管理员
     user.last_login = datetime.now()  # 更新用户最近一次登录时间
     # try:
     #     db.session.commit()  # 如果config中设置SQLALCHEMY_COMMIT_ON_TEARDOWN=True，此处try/except可省略
