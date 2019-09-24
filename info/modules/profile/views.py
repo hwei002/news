@@ -7,6 +7,35 @@ from info.utils.image_storage import storage
 from info.utils.response_code import RET
 
 
+@profile_blu.route('/news_list')
+@user_login_data
+def news_list():
+    page = request.args.get("p", "1")  # 获取url中传入的“?p=xxx”页码参数
+    try:
+        page = int(page)
+    except Exception as e:
+        page = 1  # 如果page取整失败，则默认显示第 1 页
+        current_app.logger.error(e)
+    try:
+        page_obj = News.query.filter(News.user_id == g.user.id).order_by(News.create_time.desc())\
+                       .paginate(page, constants.USER_COLLECTION_MAX_NEWS, False)
+        current_page = page_obj.page
+        total_page = page_obj.pages
+        current_page_news = page_obj.items
+        current_page_news = [news.to_review_dict() for news in current_page_news]
+    except Exception as e:
+        current_page = 1
+        total_page = 1
+        current_page_news = []  # 查询出错，则默认显示 1/1 页，且当页为空数据
+        current_app.logger.error(e)
+    data = {
+        "current_page_news": current_page_news,
+        "total_page": total_page,
+        "current_page": current_page
+    }
+    return render_template("news/user_news_list.html", data=data)  # GET/POST 返 render_template/jsonify
+
+
 @profile_blu.route('/news_release', methods=["GET", "POST"])
 @user_login_data
 def news_release():
