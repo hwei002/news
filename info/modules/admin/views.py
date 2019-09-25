@@ -8,6 +8,37 @@ from info.utils.response_code import RET
 from . import admin_blu
 
 
+@admin_blu.route("/news_edit")  # 除【url/视图函数名/filter内容/basic_dict/模板名】外，和news_review视图函数完全一样
+def news_edit():
+    page = request.args.get("page", 1)
+    keywords = request.args.get("keywords", None)
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+    filters = [News.status == 0]  # 仅显示【审核通过】的新闻
+    if keywords:
+        filters.append(News.title.contains(keywords))
+    try:
+        paginate = News.query.filter(*filters).order_by(News.create_time.desc())\
+                             .paginate(page, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+        current_page = paginate.page
+        total_page = paginate.pages
+        current_page_news = paginate.items
+    except Exception as e:
+        current_app.logger.error(e)
+        current_page = 1
+        total_page = 1
+        current_page_news = []
+    context = {
+        "current_page": current_page,
+        "total_page": total_page,
+        "current_page_news": [news.to_basic_dict() for news in current_page_news]
+    }
+    return render_template("admin/news_edit.html", data=context)
+
+
 @admin_blu.route('/news_review_action', methods=["POST"])  # 两视图函数可合并，通过GET/POST区分彼此
 def news_review_action():
     news_id = request.json.get("news_id", None)
@@ -63,7 +94,7 @@ def news_review():
     except Exception as e:
         current_app.logger.error(e)
         page = 1
-    filters = [News.status < 2]
+    filters = [News.status != 0]  # 仅显示【审核中】和【审核未通过】的新闻
     if keywords:
         filters.append(News.title.contains(keywords))
     try:
