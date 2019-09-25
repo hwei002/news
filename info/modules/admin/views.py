@@ -1,10 +1,40 @@
 import time
-from flask import current_app, redirect, render_template, request, session, g
+from flask import current_app, redirect, render_template, request, session, g, jsonify
 from datetime import datetime, timedelta
 from info import constants
 from info.models import User, News
 from info.utils.common import user_login_data
+from info.utils.response_code import RET
 from . import admin_blu
+
+
+@admin_blu.route('/news_review_action', methods=["POST"])  # 两视图函数可合并，通过GET/POST区分彼此
+def news_review_action():
+    news_id = request.json.get("news_id", None)
+    action = request.json.get("action", None)
+    if not news_id or action not in ["accept", "reject"]:
+        return jsonify(errno=RET.PARAMERR, errmsg="参数格式错误")
+    try:
+        news_id = int(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="news_id必须为整数")
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
+    if not news:
+        return jsonify(errno=RET.NODATA, errmsg="未查询到该id对应新闻")
+    if action == "accept":
+        news.status = 0
+    else:
+        reason = request.json.get("reason", None)
+        if not reason:
+            return jsonify(errno=RET.PARAMERR, errmsg="请输入审核未通过原因")
+        news.status = -1
+        news.reason = reason
+    return jsonify(errno=RET.OK, errmsg="新闻审核完成")
 
 
 @admin_blu.route('/news_review_detail/<int:news_id>')
