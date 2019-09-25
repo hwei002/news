@@ -153,6 +153,9 @@ $(function(){
                 success: function (resp) {
                     if (resp.errno == "0") {
                         var like_count = $this.attr('data-likecount');
+                        if (like_count == undefined){  // 如果我们对某评论的点赞，是该评论的首赞，
+                            like_count = 0;  // 那么上述var like_count取出来是undefined，需初始化为0
+                        }
                         if (action == "add") {  // 更新点赞按钮图标
                             like_count = parseInt(like_count) + 1;
                             $this.addClass('has_comment_up');  // 点赞操作，新增【用户已赞】类标签
