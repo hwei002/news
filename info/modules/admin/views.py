@@ -2,10 +2,86 @@ import time
 from flask import current_app, redirect, render_template, request, session, g, jsonify
 from datetime import datetime, timedelta
 from info import constants
-from info.models import User, News
+from info.models import User, News, Category
 from info.utils.common import user_login_data
+from info.utils.image_storage import storage
 from info.utils.response_code import RET
 from . import admin_blu
+
+
+@admin_blu.route("/news_edit_detail", methods=["GET", "POST"])
+def news_edit_detail():
+    if request.method == "GET":  # 点击【编辑】按钮打开页面是GET请求，此时需将该条新闻内容返回前端供渲染显示！！！
+        news_id = request.args.get("news_id", None)
+        if not news_id:
+            return render_template("admin/news_edit_detail.html", data={"errmsg": "news_id不能为空"})
+        try:
+            news_id = int(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return render_template("admin/news_edit_detail.html", data={"errmsg": "news_id必须为整数"})
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return render_template("admin/news_edit_detail.html", data={"errmsg": "数据库查询失败"})
+        if not news:
+            return render_template("admin/news_edit_detail.html", data={"errmsg": "该id对应的新闻不存在"})
+        try:
+            categories = Category.query.all()  # 需将所有类别都返回供渲染，因管理员需要看到类别下拉框中的所有类别！
+        except Exception as e:
+            current_app.logger.error(e)
+            return render_template("admin/news_edit_detail.html", data={"errmsg": "数据库查询失败"})
+        categories_filtered = []
+        for category in categories[1:]:  # 【最新】类别无需返回给前端
+            category_dict = category.to_dict()
+            category_dict["is_selected"] = False
+            if category.id == news.category_id:  # 遍历类别时，如果某类别恰是该新闻所属类别，则为其标示【选中】
+                category_dict["is_selected"] = True  # 前端渲染该新闻时，类别下拉框应默认显示该新闻当前所属类别！
+            categories_filtered.append(category_dict)
+        data = {
+            "news": news.to_dict(),
+            "categories": categories_filtered
+        }
+        return render_template("admin/news_edit_detail.html", data=data)
+    else:  # 当管理员完成该新闻版式编辑，点击【提交】按钮是POST请求，此时需从前端取出各改后参数，并更新数据库中该新闻各属性！
+        news_id = request.form.get("news_id", None)
+        title = request.form.get("title", None)
+        category_id = request.form.get("category_id", None)
+        digest = request.form.get("digest", None)
+        index_image = request.files.get("index_image", None)  # 此参数可以为空，表示仍使用原图片
+        content = request.form.get("content", None)
+        if not all([news_id, title, category_id, digest, content]):
+            return jsonify(errno=RET.PARAMERR, errmsg="参数有误")
+        try:
+            news_id = int(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.PARAMERR, errmsg="news_id必须为整数")
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
+        if not news:
+            return jsonify(errno=RET.NODATA, errmsg="该id对应的新闻不存在")
+        news.title = title
+        news.category_id = category_id
+        news.digest = digest
+        news.content = content
+        if index_image:  # 如果此参数有值，说明需要更换图片
+            try:
+                index_image = index_image.read()  # 先尝试读取图片
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=RET.PARAMERR, errmsg="参数有误")
+            try:
+                key = storage(index_image)  # 再将图片上传到七牛云
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=RET.THIRDERR, errmsg="上传图片失败")
+            news.index_image_url = constants.QINIU_DOMIN_PREFIX + key
+        return jsonify(errno=RET.OK, errmsg="新闻版式编辑成功")
 
 
 @admin_blu.route("/news_edit")  # 除【url/视图函数名/filter内容/basic_dict/模板名】外，和news_review视图函数完全一样
