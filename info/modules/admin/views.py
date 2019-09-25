@@ -7,6 +7,23 @@ from info.utils.common import user_login_data
 from . import admin_blu
 
 
+@admin_blu.route('/news_review_detail/<int:news_id>')
+def news_review_detail(news_id):
+    try:
+        news_id = int(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return render_template("admin/news_review_detail.html", data={"errmsg": "参数必须为整数"})
+    news = None
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+    if not news:
+        return render_template("admin/news_review_detail.html", data={"errmsg": "未查询到此新闻"})
+    return render_template("admin/news_review_detail.html", data={"news": news.to_dict()})
+
+
 @admin_blu.route("/news_review")
 def news_review():
     page = request.args.get("page", 1)
