@@ -2,9 +2,36 @@ import time
 from flask import current_app, redirect, render_template, request, session, g
 from datetime import datetime, timedelta
 from info import constants
-from info.models import User
+from info.models import User, News
 from info.utils.common import user_login_data
 from . import admin_blu
+
+
+@admin_blu.route("/news_review")
+def news_review():
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+    try:
+        paginate = News.query.filter(News.status < 2).order_by(News.create_time.desc())\
+                             .paginate(page, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+        current_page = paginate.page
+        total_page = paginate.pages
+        current_page_news = paginate.items
+    except Exception as e:
+        current_app.logger.error(e)
+        current_page = 1
+        total_page = 1
+        current_page_news = []
+    context = {
+        "current_page": current_page,
+        "total_page": total_page,
+        "current_page_news": [news.to_review_dict() for news in current_page_news]
+    }
+    return render_template("admin/news_review.html", data=context)
 
 
 @admin_blu.route("/user_list")
