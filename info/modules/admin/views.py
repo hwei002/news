@@ -1,9 +1,37 @@
 import time
 from flask import current_app, redirect, render_template, request, session, g
 from datetime import datetime, timedelta
+from info import constants
 from info.models import User
 from info.utils.common import user_login_data
 from . import admin_blu
+
+
+@admin_blu.route("/user_list")
+def user_list():
+    page = request.args.get("page", 1)  # 对于用url传入参数的GET请求，使用args去获取参数
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+    try:
+        paginate = User.query.filter(User.is_admin == False).order_by(User.last_login.desc())\
+                             .paginate(page, constants.ADMIN_USER_PAGE_MAX_COUNT, False)
+        current_page = paginate.page
+        total_page = paginate.pages
+        current_page_users = paginate.items
+    except Exception as e:
+        current_app.logger.error(e)
+        current_page = 1
+        total_page = 1
+        current_page_users = []
+    data = {
+        "current_page": current_page,
+        "total_page": total_page,
+        "current_page_users": [user.to_admin_dict() for user in current_page_users]
+    }
+    return render_template("admin/user_list.html", data=data)
 
 
 @admin_blu.route('/user_count')
