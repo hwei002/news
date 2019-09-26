@@ -1,10 +1,80 @@
+from flask import abort
 from flask import current_app, g, redirect, render_template, request, jsonify
 from info import constants, db
-from info.models import Category, News
+from info.models import Category, News, User
 from info.modules.profile import profile_blu
 from info.utils.common import user_login_data
 from info.utils.image_storage import storage
 from info.utils.response_code import RET
+
+
+@profile_blu.route('/other_news_list')
+@user_login_data
+def other_news_list():
+    other_id = request.args.get("other_id", None)
+    page = request.args.get("page", 1)
+    if not other_id:
+        return jsonify(errno=RET.PARAMERR, errmsg="other_id不能为空")
+    try:
+        other_id = int(other_id)
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数必须为整数")
+    try:
+        other = User.query.get(other_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
+    if not other:
+        return jsonify(errno=RET.NODATA, errmsg="指定id对应的新闻不存在")
+    try:
+        paginate = other.news_list.paginate(page, constants.USER_COLLECTION_MAX_NEWS, False)
+        current_page = paginate.page
+        total_page = paginate.pages
+        news_list = paginate.items
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据查询错误")  # user.news_list是dynamic=lazy
+    data = {
+        "current_page": current_page,
+        "total_page": total_page,
+        "news_list": [news.to_basic_dict() for news in news_list]
+    }
+    return jsonify(errno=RET.OK, errmsg="OK", data=data)
+
+
+@profile_blu.route("/other_info")
+@user_login_data
+def other_info():
+    other_id = request.args.get("other_id", None)
+    if not other_id:
+        abort(404)
+    try:
+        other_id = int(other_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(404)
+
+    other = None
+    try:
+        other = User.query.get(other_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(404)
+    if not other:
+        abort(404)
+
+    user = g.user
+    is_followed = False
+    if user in other.followers:
+        is_followed = True  # 当前登录user（如果存在），在other粉丝列表中，则【已关注】
+    data = {
+        "user": user.to_dict() if user else None,
+        "other": other.to_dict(),
+        "is_followed": is_followed
+    }
+    return render_template("news/other.html", data=data)
 
 
 @profile_blu.route("/user_follow")
