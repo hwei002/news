@@ -7,6 +7,33 @@ from info.utils.image_storage import storage
 from info.utils.response_code import RET
 
 
+@profile_blu.route("/user_follow")
+@user_login_data
+def user_follow():
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+    try:
+        paginate = g.user.followed.paginate(page, constants.USER_FOLLOWED_MAX_COUNT, False)
+        current_page = paginate.page
+        total_page = paginate.pages
+        current_page_users = paginate.items
+    except Exception as e:
+        current_app.logger.error(e)
+        current_page = 1
+        total_page = 1
+        current_page_users = []
+    data = {
+        "current_page": current_page,
+        "total_page": total_page,
+        "current_page_users": [user.to_dict() for user in current_page_users]
+    }
+    return render_template("news/user_follow.html", data=data)
+
+
 @profile_blu.route('/news_list')
 @user_login_data
 def news_list():
