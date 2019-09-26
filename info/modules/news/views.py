@@ -1,9 +1,38 @@
 from flask import current_app, render_template, g, abort, jsonify, request
 from info import constants, db
-from info.models import News, Comment, CommentLike
+from info.models import News, Comment, CommentLike, User
 from info.modules.news import news_blu
 from info.utils.common import user_login_data
 from info.utils.response_code import RET
+
+
+@news_blu.route("/followed_user", methods=["POST"])
+@user_login_data
+def followed_user():
+    me = g.user
+    if not me:
+        return jsonify(errno=RET.LOGINERR, errmsg="用户未登录")
+    user_id = request.json.get("user_id", None)
+    action = request.json.get("action", None)
+    if not user_id or action not in ["follow", "unfollow"]:
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    try:
+        user_id = int(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="user_id必须为整数")
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
+    if not user:
+        return jsonify(errno=RET.NODATA, errmsg="未查询到指定user_id的用户")
+    if action == "follow" and me not in user.followers:
+        user.followers.append(me)
+    elif action == "unfollow" and me in user.followers:
+        user.followers.remove(me)
+    return jsonify(errno=RET.OK, errmsg="操作成功")
 
 
 @news_blu.route('/like_comment', methods=["POST"])

@@ -237,14 +237,64 @@ $(function(){
         }
     });
 
-        // 关注当前新闻作者
-    $(".focus").click(function () {
-
+    $(".focus").click(function () {  // 关注当前新闻作者
+        var user_id = $(this).attr('data-userid');
+        var params = {
+            "action": "follow",
+            "user_id": user_id
+        };
+        $.ajax({
+            url: "/news/followed_user",
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(params),
+            headers: {
+                "X-CSRFToken": getCookie("csrf_token")
+            },
+            success: function (resp) {
+                if (resp.errno == "0") {  // 关注成功
+                    var count = parseInt($(".follows b").html());
+                    count++;
+                    $(".follows b").html(count + "");
+                    $(".focus").hide();
+                    $(".focused").show()
+                }else if (resp.errno == "4101"){
+                    $('.login_form_con').show(); // 未登录，弹登录框
+                }else {
+                    alert(resp.errmsg); // 关注失败，弹错误信息
+                }
+            }
+        })
     });
 
-    // 取消关注当前新闻作者
-    $(".focused").click(function () {
-
+    $(".focused").click(function () {  // 取消关注当前新闻作者
+        var user_id = $(this).attr('data-userid');
+        var params = {
+            "action": "unfollow",
+            "user_id": user_id
+        };
+        $.ajax({
+            url: "/news/followed_user",
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(params),
+            headers: {
+                "X-CSRFToken": getCookie("csrf_token")
+            },
+            success: function (resp) {
+                if (resp.errno == "0") {  // 取消关注成功
+                    var count = parseInt($(".follows b").html());
+                    count--;
+                    $(".follows b").html(count + "");
+                    $(".focus").show();
+                    $(".focused").hide()
+                }else if (resp.errno == "4101"){
+                    $('.login_form_con').show(); // 未登录，弹登录框
+                }else {
+                    alert(resp.errmsg); // 取消关注失败
+                }
+            }
+        })
     })
 });
 
