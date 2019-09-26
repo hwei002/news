@@ -202,12 +202,19 @@ def news_detail(news_id):
             comment_dic["is_like"] = True  # 如果该评论的id，出现在【该用户点过赞的所有评论的id列表】中，则改为True
         comments_dic.append(comment_dic)
 
+    # 判断当前登录用户（如果有）是否已关注该新闻的作者
+    is_followed = False
+    if news.user and user:  # news.user非空表示【该新闻不是爬取的，而是有user发布的】；user非空表示【当前有已登录用户】
+        if user in news.user.followers:  # 如果【当前登录用户在该新闻的作者的粉丝列表中】，则说明已关注该作者
+            is_followed = True
+
     # 把数据进行汇总，当参数传给模板，供渲染时使用
     data = {
         "user": user.to_dict() if user else None,  # 将user转为字典形式传给前端html模板，供 js 分支判断使用
         "top_click_news": top_click_news,
         "news": news.to_dict(),
         "is_collected": is_collected,
+        "is_followed": is_followed,
         "comments": comments_dic,
     }
     return render_template('news/detail.html', data=data)
