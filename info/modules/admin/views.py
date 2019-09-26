@@ -1,12 +1,52 @@
 import time
 from flask import current_app, redirect, render_template, request, session, g, jsonify
 from datetime import datetime, timedelta
-from info import constants
+from info import constants, db
 from info.models import User, News, Category
 from info.utils.common import user_login_data
 from info.utils.image_storage import storage
 from info.utils.response_code import RET
 from . import admin_blu
+
+
+@admin_blu.route("/news_type", methods=["GET", "POST"])
+def news_type():
+    if request.method == "GET":
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+            return render_template("admin/news_type.html", errmsg="数据库查询失败")
+        if not categories:
+            return render_template("admin/news_type.html", errmsg="未查到新闻分类")
+        categories = [category.to_dict() for category in categories[1:]]  # 扔掉“最新”
+        return render_template("admin/news_type.html", data={"categories": categories})
+    else:
+        category_name = request.json.get("name")
+        category_id = request.json.get("id")
+        if not category_name:
+            return jsonify(errno=RET.PARAMERR, errmsg="类别名称不能为空")
+        if category_id:  # category_id非空，说明是【修改已有类别】操作
+            try:
+                category_id = int(category_id)
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=RET.PARAMERR, errmsg="类别id必须为整数")
+            try:
+                category = Category.query.get(category_id)
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
+            if not category:
+                return jsonify(errno=RET.NODATA, errmsg="该id对应的类别不存在")
+            category.name = category_name
+        else:  # category_id为空，说明是【增加一个新类别】操作
+            if Category.query.filter(Category.name == category_name).count() > 0:
+                return jsonify(errno=RET.PARAMERR, errmsg="拟添加类别已存在")
+            category = Category()
+            category.name = category_name
+            db.session.add(category)
+        return jsonify(errno=RET.OK, errmsg="新闻类别修改/新增成功")
 
 
 @admin_blu.route("/news_edit_detail", methods=["GET", "POST"])
